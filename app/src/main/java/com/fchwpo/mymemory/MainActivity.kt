@@ -2,12 +2,17 @@ package com.fchwpo.mymemory
 
 import android.animation.ArgbEvaluator
 import android.annotation.SuppressLint
+import android.content.DialogInterface
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.widget.RadioGroup
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.GridLayoutManager
@@ -22,7 +27,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var rvBoard: RecyclerView
     private lateinit var tvNumMoves: TextView
     private lateinit var tvNumPairs: TextView
-    private var boardSize = BoardSize.EASY
+    private var boardSize = BoardSize.HARD
     private lateinit var memoryGame: MemoryGame
     private lateinit var adapter: MemoryBoardAdapter
 
@@ -49,21 +54,76 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
+        when (item.itemId) {
             R.id.miRestart -> {
                 // restartGame
                 if (memoryGame.getNumberOfMoves() > 0 && !memoryGame.hasUserWon()) {
                     // show alert dialog
-                    return true
+                    showAlertDialog("Quit your current game !?", null) {
+                        createFreshBoard()
+                    }
+                } else {
+                    createFreshBoard()
                 }
-                createFreshBoard()
-                true
             }
-            else -> false
+            R.id.miChoseNewSize -> {
+                showNewSizeDialog()
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    @SuppressLint("InflateParams")
+    private fun showNewSizeDialog() {
+        val boardSizeView = LayoutInflater.from(this).inflate(R.layout.dialog_board_size, null)
+        val radioGroup = boardSizeView.findViewById<RadioGroup>(R.id.radioGroup)
+        when(boardSize) {
+            BoardSize.EASY -> radioGroup.check(R.id.rbEasy)
+            BoardSize.MEDIUM -> radioGroup.check(R.id.rbMedium)
+            BoardSize.HARD -> radioGroup.check(R.id.rbHard)
+        }
+        showAlertDialog("Choose new size", boardSizeView) {
+            // Set a new value of boardSize
+            boardSize = when (radioGroup.checkedRadioButtonId) {
+                R.id.rbEasy -> BoardSize.EASY
+                R.id.rbMedium -> BoardSize.MEDIUM
+                else -> BoardSize.HARD
+            }
+            // create new fresh board according to selection
+            createFreshBoard()
         }
     }
 
+    private fun showAlertDialog(
+        title: String,
+        view: View?,
+        onPositiveButtonClickListener: View.OnClickListener
+    ) {
+        AlertDialog.Builder(this)
+            .setTitle(title)
+            .setView(view)
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("OK") { _: DialogInterface, _: Int ->
+                onPositiveButtonClickListener.onClick(null)
+            }.show()
+    }
+
+    @SuppressLint("SetTextI18n")
     private fun createFreshBoard() {
+        when(boardSize){
+            BoardSize.EASY -> {
+                tvNumPairs.text = "Pairs: 0/4"
+                tvNumMoves.text = "Easy: 4x2"
+            }
+            BoardSize.MEDIUM -> {
+                tvNumPairs.text = "Pairs: 0/9"
+                tvNumMoves.text = "Medium: 6x3"
+            }
+            BoardSize.HARD -> {
+                tvNumPairs.text = "Pairs: 0/24"
+                tvNumMoves.text = "Hard: 6x4"
+            }
+        }
         memoryGame = MemoryGame(boardSize)
         adapter = MemoryBoardAdapter(
             this,

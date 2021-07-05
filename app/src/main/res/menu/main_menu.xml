@@ -9,4 +9,9 @@
         android:title="Restart"
         android:visible="true"
         app:showAsAction="always" />
+    <item
+        android:id="@+id/miChoseNewSize"
+        android:icon="?attr/actionModeSelectAllDrawable"
+        android:title="Choose new size"
+        app:showAsAction="never" />
 </menu>
